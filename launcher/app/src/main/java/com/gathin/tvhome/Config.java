@@ -83,6 +83,8 @@ final class Config {
     final String inputAction;
     /** Vendor source numbers for passthrough inputs (config.xml or theme input_sources). */
     final List<String> inputSources;
+    /** The header Settings pill prefers the vendor settings app over AOSP's (native_settings_button). */
+    final boolean nativeSettingsButton;
     /** Scheme an Inputs row's passthrough URI is sent with instead of content:// (config.xml or theme input_uri_scheme). */
     final String inputUriScheme;
     final int columns;
@@ -282,7 +284,7 @@ final class Config {
                    String liveTvAction, String liveTvInputId, Map<String, String> launchActions, Map<String, String> appLabels,
                    Map<String, String> appBanners, String sourcePanelService, String sourcePanelAction,
                    String sourcePanelExtra, boolean coocaaSources, String inputAction, List<String> inputSources,
-                   String inputUriScheme, int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
+                   boolean nativeSettingsButton, String inputUriScheme, int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
                    boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean bootToLiveTv, boolean openOnStartChoice, boolean dockTitle, boolean dockRow, boolean topMenu, boolean launcherSettingsButton, boolean reorderButton, boolean showNetworkPill, boolean showInputsPill, boolean iconOnlyButtons, boolean iconOnlyInputs, boolean libraryButton, boolean showLibraryPill, int wifiLabelWidth, boolean alwaysShowNames, boolean wallpaperTrueColor, boolean focusOvershoot, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, String gameDay, boolean appLibrary, boolean appLibrarySelection, boolean libraryOkOpens, boolean uniformTiles, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean restoreKeyServices, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
@@ -316,6 +318,7 @@ final class Config {
         this.coocaaSources = coocaaSources;
         this.inputAction = inputAction;
         this.inputSources = Collections.unmodifiableList(inputSources);
+        this.nativeSettingsButton = nativeSettingsButton;
         this.inputUriScheme = inputUriScheme;
         this.columns = columns;
         this.rowsBelowDock = rowsBelowDock;
@@ -448,6 +451,7 @@ final class Config {
         boolean coocaaSources = res.getBoolean(R.bool.coocaa_sources);
         String inputAction = res.getString(R.string.input_action).trim();
         List<String> inputSources = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.input_sources)));
+        boolean nativeSettingsButton = res.getBoolean(R.bool.native_settings_button);
         String inputUriScheme = res.getString(R.string.input_uri_scheme).trim();
         int columns = res.getInteger(R.integer.columns);
         int rowsBelow = res.getInteger(R.integer.rows_below_dock);
@@ -562,6 +566,7 @@ final class Config {
             coocaaSources = bool(json, "coocaa_sources", coocaaSources);
             inputAction = string(json, "input_action", inputAction);
             inputSources = stringList(json, "input_sources", inputSources);
+            nativeSettingsButton = bool(json, "native_settings_button", nativeSettingsButton);
             inputUriScheme = string(json, "input_uri_scheme", inputUriScheme).trim();
             columns = integer(json, "columns", columns, 1, 8);
             rowsBelow = integer(json, "rows_below_dock", rowsBelow, 0, 3);
@@ -702,7 +707,7 @@ final class Config {
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
 
         return new Config(dock, fillDock, hidden, libraryApps, libraryExcludedApps, liveTv, liveTvAction, liveTvInputId, packageMap(launchActions), packageMap(appLabels),
-                packageMap(appBanners), panelService, panelAction, panelExtra, coocaaSources, inputAction, inputSources, inputUriScheme, Math.max(1, columns),
+                packageMap(appBanners), panelService, panelAction, panelExtra, coocaaSources, inputAction, inputSources, nativeSettingsButton, inputUriScheme, Math.max(1, columns),
                 Math.max(0, rowsBelow), animations, advancedEffects, shamsi, greetingName, moduleCards, reducedMotion, bootToLiveTv,
                 openOnStartChoice, dockTitle, dockRow, topMenu, launcherSettingsButton, reorderButton, showNetworkPill, showInputsPill,
                 iconOnlyButtons, iconOnlyInputs, libraryButton, showLibraryPill, wifiLabelWidth, alwaysShowNames, wallpaperTrueColor, focusOvershoot,

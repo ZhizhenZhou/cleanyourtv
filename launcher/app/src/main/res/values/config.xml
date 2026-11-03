@@ -9,9 +9,29 @@
 
     <!-- Tried in order when no standard settings handler is usable; each package must also be visible
          through <queries> in the manifest. -->
+    <!-- The Settings pill opens the firmware's own settings app instead of AOSP's on a click. AOSP's stays one
+         press away from Launcher settings and from the Settings menu's TV system settings row. Off by default;
+         a theme can set "native_settings_button": true. -->
+    <bool name="native_settings_button">false</bool>
+
     <string-array name="settings_fallback_components" translatable="false">
+        <!-- Tried in order; the first entry whose activity really exists on this TV is used. Xiaomi China
+             keeps Account & Security (the ADB switch) only in its own settings app, while the standard
+             action opens AOSP's. -->
         <item>com.xiaomi.mitv.settings/com.xiaomi.mitv.settings.entry.MainActivity</item>
+        <!-- TCL (MT5879 and others) answers no settings action at all. -->
         <item>com.tcl.settings/com.tcl.settings.ui.MainActivity</item>
+        <!-- Hisense VIDAA/ATV: its own page is inside the AOSP package and loses the priority race. -->
+        <item>com.android.tv.settings/com.hisense.systemsettings.MainActivity</item>
+        <!-- Haier YunOS: the standard action opens a Bluetooth page that crashes. -->
+        <item>com.haier.tv.menusetting/com.haier.tv.menusetting.RootActivity</item>
+        <!-- Konka: two generations, neither answers a standard action. -->
+        <item>com.konka.tvsettings/com.konka.settingcenter.settings.view.MainSettingsActivity</item>
+        <item>com.konka.systemsetting/com.konka.systemsetting.MainActivity</item>
+        <!-- PPTV: answers no standard action either. -->
+        <item>com.pptv.setting/com.pptv.setting.root.SettingsActivity</item>
+        <!-- Redmi Projector Lite (CVTE/ASU): vendor main activity, no standard filter. -->
+        <item>com.android.settings/com.asu.settings.TvMainActivity</item>
         <item>com.amazon.tv.launcher/com.amazon.tv.launcher.ui.MainSettingsActivity</item>
     </string-array>
 

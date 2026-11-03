@@ -8,9 +8,15 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.Settings;
 
-/** The standard settings intent, or, when nothing usable answers it, the first vendor settings entry
- *  from settings_fallback_components that is installed (Xiaomi China, TCL / FFALCON, Fire OS), else the
- *  AOSP TV settings app's main screen where it is installed. */
+/**
+ * The standard settings intent, or, when nothing usable answers it, the first vendor settings entry from
+ * settings_fallback_components that is actually installed, else the AOSP TV settings app's main screen.
+ *
+ * <p>China-market firmware keeps pages the AOSP settings has no row for (Xiaomi's Account &amp; Security, where
+ * the ADB switch lives) in the vendor's own settings app, and several sets answer the standard action with a
+ * wrong page (Hisense answers AOSP's, Haier's Bluetooth page crashes) or with nothing at all (TCL, Konka, PPTV,
+ * the Redmi projector). The list is ordered and checked per device, so one build covers all of them.
+ */
 final class SystemSettings {
     private SystemSettings() {}
 
@@ -47,9 +53,10 @@ final class SystemSettings {
         for (String value : context.getResources().getStringArray(R.array.settings_fallback_components)) {
             ComponentName component = ComponentName.unflattenFromString(value);
             if (component == null) continue;
-            // Explicit resolveActivity() always succeeds, so check the package exists instead.
+            // A vendor entry can live in a package every TV has (Hisense's page is inside com.android.tv.settings),
+            // so the component itself has to exist, not just its package.
             try {
-                pm.getPackageInfo(component.getPackageName(), 0);
+                pm.getActivityInfo(component, 0);
             } catch (PackageManager.NameNotFoundException e) {
                 continue;
             }

@@ -829,7 +829,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnSettings.setOnClickListener(v -> {
             if (launcherSettingsButton) startActivityForResult(
                     new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
-            else open(systemIntent(Settings.ACTION_SETTINGS));
+            else {
+                // native_settings_button: a click opens the firmware's own settings app where it has one, since
+                // that is where pages AOSP's settings has no row for live (Xiaomi's Account & Security, with the
+                // ADB switch). Falls back to the standard action on a TV with no vendor entry.
+                Intent vendor = cfg.nativeSettingsButton ? SystemSettings.vendorIntent(this) : null;
+                open(vendor != null ? vendor : systemIntent(Settings.ACTION_SETTINGS));
+            }
         });
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
