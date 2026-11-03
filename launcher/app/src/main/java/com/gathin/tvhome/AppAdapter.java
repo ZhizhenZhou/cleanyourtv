@@ -191,6 +191,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** cinematic_home: only then does a launch record the last-opened app the shelf uses. */
     private final boolean cinematic;
     /** Dock order (config.xml dock_apps, or a theme's config.json). */
+
     private final List<String> favourites;
     /** Grid apps fill the dock slots dock_apps leaves free (config.xml, fill_dock). */
     private final boolean fillDock;
@@ -300,7 +301,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // uniform_tiles draws the icon, so an app's banner is never loaded. A module card keeps its banner.
             if (!(uniformTiles && card == null)) {
                 banner = bundledBanner(appBanners.get(pkg));
-                if (banner == null) banner = iconTiles.contains(pkg) ? iconBanner(ri.loadIcon(pm)) : loadBanner(pm, ri);
+                // icon_tiles names apps whose banner crops badly; they skip the banner entirely.
+                if (banner == null && !iconTiles.contains(pkg)) banner = loadBanner(pm, ri);
+                // No 16:9 banner at all (a phone app added from the library): draw the card from its icon
+                // instead of leaving a bare icon floating on Home.
+                if (banner == null) banner = iconBanner(ri.loadIcon(pm));
             }
             // The icon is only drawn (and sampled for the glow) when there is no banner, so a tile with a
             // banner skips loading and decoding it.
@@ -345,15 +350,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
-    /** icon_tiles: the app's icon centred on a dark banner-shaped tile, for apps whose own banner crops badly. */
+    /** icon_tiles: the app's icon on a card drawn from that icon, for apps whose own banner crops badly or that
+     *  ship no TV banner at all. TileCard decides between a colour gradient and a neutral plate. */
     private Drawable iconBanner(Drawable icon) {
-        int w = 320, h = 180, side = 104;
-        android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
-        android.graphics.Canvas canvas = new android.graphics.Canvas(bmp);
-        canvas.drawColor(0xFF15202B);
-        icon.setBounds((w - side) / 2, (h - side) / 2, (w + side) / 2, (h + side) / 2);
-        icon.draw(canvas);
-        return new android.graphics.drawable.BitmapDrawable(ctx.getResources(), bmp);
+        return TileCard.build(ctx.getResources(), icon);
     }
 
     /** A banner_* drawable bundled with the launcher, or null for none or a name that is not one. */
