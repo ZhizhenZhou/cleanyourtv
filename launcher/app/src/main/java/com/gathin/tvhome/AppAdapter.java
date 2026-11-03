@@ -474,6 +474,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         h.card.setVisibility(View.VISIBLE);
         h.card.setFocusable(true);
+        // A box that comes up in touch mode (Android 7 does, until the first key press) only lets a view take the
+        // focus if it is focusable in touch mode as well, and the tiles are what Home has to focus on start.
+        h.card.setFocusableInTouchMode(true);
         h.name.setText(e.name);
         // The dock has no labels, unless always_show_names asks for them (DockDecoration then makes room in the band).
         // In a single row every tile is the dock's kind: the big title above names it.

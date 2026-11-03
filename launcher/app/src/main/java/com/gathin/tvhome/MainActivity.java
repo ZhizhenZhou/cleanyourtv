@@ -52,6 +52,7 @@ import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -976,6 +977,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Not after recreate(): the launch intent survives it and would open the settings again.
         if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent()) && !openLibraryIfAsked(getIntent())) {
             openInputsIfAsked(getIntent());
+        }
+
+        // Android 7 hands the focus to the RecyclerView in the first layout pass, and a tile that asks for it while
+        // the grid holds it never gets it: the grid keeps the focus, the hero and the glass stay hidden and the
+        // screen looks empty until a key is pressed. The padding that parks the dock at the bottom is only worked
+        // out from that first layout pass, so the tiles sit too high in it and the focus search finds nothing to
+        // move to. Lay the content out once here so the pass above runs and the first frame drawn is already the
+        // right one. Android 10 sorts the focus out on its own, so this only costs the one layout pass there.
+        View content = findViewById(android.R.id.content);
+        if (content instanceof ViewGroup && ((ViewGroup) content).getChildAt(0) != null) {
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+            int width = View.MeasureSpec.makeMeasureSpec(dm.widthPixels, View.MeasureSpec.EXACTLY);
+            int height = View.MeasureSpec.makeMeasureSpec(dm.heightPixels, View.MeasureSpec.EXACTLY);
+            View root = ((ViewGroup) content).getChildAt(0);
+            root.measure(width, height);
+            root.layout(0, 0, dm.widthPixels, dm.heightPixels);
         }
     }
 
