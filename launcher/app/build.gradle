@@ -11,7 +11,7 @@ android {
         // Xiaomi: docs/devices/xiaomi-mitv-aetp0-dofus.md (com.ts.launcher).
         // ColorOS TV: docs/devices/oppo-k9-55-oppocnm632.md (com.oneplus.tv.launcher2).
         applicationId providers.gradleProperty('launcherApplicationId').getOrElse('com.gathin.tvhome')
-        minSdk 26
+        minSdk 25   // personal fork: the Dangbei DBH2 test box runs Android 7.1.2 (SDK 25)
         targetSdk 34
         versionCode 12
         versionName '3.3'
@@ -39,6 +39,10 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+        // Personal fork, minSdk 25: the clock, the lunar date, the F1 calendar and the sun times use
+        // java.time, which is API 26. Desugaring backports it (R8 keeps only what is used) instead of
+        // rewriting 40 call sites over 10 files to Calendar.
+        coreLibraryDesugaringEnabled true
     }
 }
 
@@ -47,4 +51,5 @@ dependencies {
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
     // Test only (never in the APK): plain JVM tests for the module card validators, src/test.
     testImplementation 'junit:junit:4.13.2'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 }

@@ -953,7 +953,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (tim != null) tim.registerCallback(inputCallback, handler);
+        if (tvInputAnswers(tim)) {
+            try {
+                tim.registerCallback(inputCallback, handler);
+            } catch (RuntimeException ignored) {
+                // A box that lost the service after the probe simply gets no input callbacks.
+            }
+        }
         if (cm != null) {
             cm.registerDefaultNetworkCallback(networkCallback);
             cm.registerNetworkCallback(new NetworkRequest.Builder()
@@ -1229,13 +1235,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
-    /** True when PackageManager reports apps changed since the last rebuild (one binder call). */
+    /** True when PackageManager reports apps changed since the last rebuild (one binder call).
+     *  getChangedPackages is API 26; before it the PACKAGE_ADDED/REMOVED receiver already rebuilds the tiles,
+     *  so the poll has nothing to answer and stays quiet. */
     private boolean packagesChangedSinceRebuild() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false;
         ChangedPackages changed = getPackageManager().getChangedPackages(packageSequence);
         return changed != null && !changed.getPackageNames().isEmpty();
     }
 
     private int currentPackageSequence(int since) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return since;
         ChangedPackages changed = getPackageManager().getChangedPackages(since);
         return changed != null ? changed.getSequenceNumber() : since;
     }
@@ -1380,11 +1390,37 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         wallpaperPlayer.close();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (tim != null) tim.unregisterCallback(inputCallback);
+        if (tvInputAnswers(tim)) {
+            try {
+                tim.unregisterCallback(inputCallback);
+            } catch (RuntimeException ignored) {
+            }
+        }
         if (cm != null) {
             cm.unregisterNetworkCallback(networkCallback);
             cm.unregisterNetworkCallback(vpnCallback);
         }
+    }
+
+    /** Cached answer of "does the TV input framework work here?"; null until probed once per process. */
+    private static Boolean tvInputAnswersKnown;
+
+    /**
+     * True when the TV input framework answers on this device. A streaming box (a Dangbei box on Android 7) has
+     * the TvInputManager object but no {@code tv_input} service behind it, so every call throws NPE; the home
+     * screen has to read that as "no inputs" instead of crashing.
+     */
+    private static boolean tvInputAnswers(TvInputManager tim) {
+        if (tim == null) return false;
+        if (tvInputAnswersKnown == null) {
+            try {
+                tim.getTvInputList();
+                tvInputAnswersKnown = Boolean.TRUE;
+            } catch (RuntimeException e) {
+                tvInputAnswersKnown = Boolean.FALSE;
+            }
+        }
+        return tvInputAnswersKnown;
     }
 
     /**
@@ -3198,7 +3234,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean any = liveTvIntent() != null || !sourcePanelService.isEmpty()
                 || (coocaaSources && !CoocaaSources.list(this).isEmpty());
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (!any && tim != null) {
+        if (!any && tvInputAnswers(tim)) {
             for (TvInputInfo info : tim.getTvInputList()) {
                 // Inputs hidden in Settings > Inputs are left out of the menu, so they don't count here either.
                 if (info.isPassthroughInput() && !info.isHidden(this)) {
@@ -3408,7 +3444,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         String tunerId = null;
         boolean tunerIsHw = false;
         boolean tunerIsAnalog = false;
-        if (tim != null) {
+        if (tvInputAnswers(tim)) {
             List<TvInputInfo> inputs = new ArrayList<>(tim.getTvInputList());
             // HDMI ports first in port order, then AV and the rest.
             Collections.sort(inputs, (a, b) -> {

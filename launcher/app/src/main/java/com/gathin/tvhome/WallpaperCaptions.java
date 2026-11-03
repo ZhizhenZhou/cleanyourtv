@@ -1,8 +1,11 @@
 package com.gathin.tvhome;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,10 +41,15 @@ final class WallpaperCaptions {
     static Map<String, String> read(File folder) {
         File file = folder == null ? null : new File(folder, FILE_NAME);
         if (file == null || !file.isFile() || file.length() > 256 * 1024) return Collections.emptyMap();
-        try {
-            return parse(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+        // Files.readAllLines is API 26: read the same file line by line so Android 7 shows captions too.
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) lines.add(line);
         } catch (Exception e) {
             return Collections.emptyMap();
         }
+        return parse(lines);
     }
 }
