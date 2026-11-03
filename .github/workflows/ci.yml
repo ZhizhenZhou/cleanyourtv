@@ -66,8 +66,12 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease
-      - name: The launcher stays small
+      - name: The launcher stays small (personal fork budget)
+        # Upstream keeps this hard at 589,824 B (576 KB) because its launcher targets 1 GB TVs and must not
+        # grow an image/video/network library. This fork is one person's build with a few extra features
+        # (folders, per-input device icons, key sounds), so the budget is 2 MB: still an order of magnitude
+        # below a stock launcher, and the size is printed on every run so a regression stays visible.
         run: |
           size=$(stat -c %s launcher/app/build/outputs/apk/release/app-release.apk)
-          echo "release APK: $((size / 1024)) KB"
-          test "$size" -lt 589824 || { echo "APK is over 576 KB; the launcher targets 1 GB TVs, keep it small"; exit 1; }
+          echo "release APK: $((size / 1024)) KB (budget: $((2097152 / 1024)) KB)"
+          test "$size" -lt 2097152 || { echo "APK is over 2 MB; check for a stray library or asset"; exit 1; }
